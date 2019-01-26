@@ -13,16 +13,25 @@ public class Vision
 	private CameraFeed cameraThread;
 	public Rect   targetRectangleRight, targetRectangeLeft;
 	private GripPipelineReflectiveTape pipeline = new GripPipelineReflectiveTape();
+	private double centerX, centerY;
 	
 	private final double LEFT_ANGLE_THRESHOLD = 0.0;
 	private final double RIGHT_ANGLE_THRESHOLD = 0.0;
+	private boolean contoursPresent;
+	private int contourSize;
+	
 	// This variable and method make sure this class is a singleton.
 	
 	public static Vision vision = null;
 	
 	public static Vision getInstance(CameraFeed cameraThread) 
 	{
-		if (vision == null) vision = new Vision(cameraThread);
+		if (vision == null){
+			vision = new Vision(cameraThread);
+			vision.contourSize = 0;
+			vision.contoursPresent = false;
+			vision.centerX = 0.0;
+		}
 		
 		return vision;
 	}
@@ -34,6 +43,11 @@ public class Vision
 		this.cameraThread = cameraThread;
 	}
 
+	public boolean contoursPresent(){
+		
+		return contoursPresent;		
+	}
+
 	public double getContourDistanceBox(){
 		
 		double offset = 0.0;
@@ -43,17 +57,20 @@ public class Vision
 	    image = cameraThread.getCurrentImage();
 
 		pipeline.process(image);
+		contourSize = pipeline.filterContoursOutput().size();
 		
-		if(pipeline.filterContoursOutput().size() > 1){
+		if(contourSize > 1){
 			targetRectangeLeft = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
 			targetRectangleRight = Imgproc.boundingRect(pipeline.filterContoursOutput().get(1));
 		}
 
-		if(targetRectangeLeft != null && targetRectangleRight != null){
+		contoursPresent = (targetRectangeLeft != null && targetRectangleRight != null);
+		if(contoursPresent){
 			centerXLeft = targetRectangeLeft.x + targetRectangeLeft.width / 2;
 			centerXRight = targetRectangleRight.x + targetRectangleRight.width / 2;
 
 			offset = Math.abs((centerXLeft - centerXRight));
+			centerX = centerXLeft + (offset/2);
 		}
 
 		if(offset > 10.0){
