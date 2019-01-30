@@ -2,8 +2,8 @@
 Separate camera server code. Runs entirely independent on the External Raspberry Pi.
 
 ### Web Dashboard
-- The Image generate a static IP Dashboard : http:frcvision.local/
-- Connect to Robot Network
+- The Image Generates a static IP Web Dashboard
+- Connect to Robot Network and open : http:frcvision.local/ in browser
 
 Allows For:
 - Edit Camera Configurations (Brightness, Exposure, Image Size etc)
