@@ -1,0 +1,2 @@
+#!/bin/sh
+scp build/libs/PiVision-all.jar pi@frcvision.local:/home/pi
