@@ -44,8 +44,15 @@ public class Vision
 	}
 
 	public boolean contoursPresent(){
-		
 		return contoursPresent;		
+	}
+
+	public double contourSize(){
+		return contourSize;
+	}
+
+	public double centerX(){
+		return centerX;
 	}
 
 	public double getContourDistanceBox(){
@@ -53,6 +60,8 @@ public class Vision
 		double offset = 0.0;
 		double centerXLeft = 0.0, centerXRight = 0.0;
 		Mat image = null;
+		targetRectangeLeft = null;
+		targetRectangleRight = null;
 
 	    image = cameraThread.getCurrentImage();
 
@@ -62,6 +71,13 @@ public class Vision
 		if(contourSize > 1){
 			targetRectangeLeft = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
 			targetRectangleRight = Imgproc.boundingRect(pipeline.filterContoursOutput().get(1));
+
+			if(targetRectangeLeft.x > targetRectangleRight.x){
+				Rect temp = targetRectangeLeft;
+				targetRectangeLeft = targetRectangleRight;
+				targetRectangleRight = temp;
+			}
+
 		}
 
 		contoursPresent = (targetRectangeLeft != null && targetRectangleRight != null);
@@ -71,6 +87,10 @@ public class Vision
 
 			offset = Math.abs((centerXLeft - centerXRight));
 			centerX = centerXLeft + (offset/2);
+		}
+		else {
+			offset = 0.0;
+			centerX = 0.0;
 		}
 
 		if(offset > 10.0){

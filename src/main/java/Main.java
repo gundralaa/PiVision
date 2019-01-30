@@ -33,6 +33,7 @@ public final class Main {
   private static String configFile = "/boot/frc.json";
   private static CameraFeed cameraThread;
   private static int team = 4450;
+  private static String tableName = "PiVision";
   private static GripPipelineReflectiveTape pipeline = new GripPipelineReflectiveTape();
 
 
@@ -50,8 +51,12 @@ public final class Main {
 
     // start NetworkTables
     NetworkTableInstance ntinst = NetworkTableInstance.getDefault();
-    NetworkTable table = ntinst.getTable("vision_data");
+    NetworkTable table = ntinst.getTable(tableName);
+    
     NetworkTableEntry inside_dist = table.getEntry("inner_dist");
+    NetworkTableEntry contoursPresent = table.getEntry("contours_present");
+    NetworkTableEntry contourSize = table.getEntry("contour_size");
+    NetworkTableEntry centerX = table.getEntry("contour_center_x");
 
     System.out.println("Setting up NetworkTables client for team " + team);
     ntinst.startClientTeam(team);
@@ -77,7 +82,11 @@ public final class Main {
         return;
       }
       double offset = vision.getContourDistanceBox();
-      inside_dist.setDouble(offset);    
+      
+      contourSize.setDouble(vision.contourSize());
+      centerX.setDouble(vision.centerX()); 
+      inside_dist.setDouble(offset);
+      contoursPresent.setBoolean(vision.contoursPresent()); 
     }
   }
 }
