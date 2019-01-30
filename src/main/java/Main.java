@@ -42,17 +42,17 @@ public final class Main {
    */
   public static void main(String... args) {
     
+    // Set config file path
     if (args.length > 0) {
       configFile = args[0];
       System.out.println("Config File");
     }
     
-    System.out.println("No Network Tables");
-
     // start NetworkTables
     NetworkTableInstance ntinst = NetworkTableInstance.getDefault();
     NetworkTable table = ntinst.getTable(tableName);
     
+    // Intialize Every Table Entry
     NetworkTableEntry inside_dist = table.getEntry("inner_dist");
     NetworkTableEntry contoursPresent = table.getEntry("contours_present");
     NetworkTableEntry contourSize = table.getEntry("contour_size");
@@ -61,10 +61,14 @@ public final class Main {
     System.out.println("Setting up NetworkTables client for team " + team);
     ntinst.startClientTeam(team);
 
+    // Create camera thread instance
     cameraThread = CameraFeed.getInstance();
     System.out.println("Ready Instance");
+
+    // Create Vision Object Instance
     Vision vision = Vision.getInstance(cameraThread);
     
+    // Set GRIP Pipeline and Start Thread
     cameraThread.setPipeline(pipeline);
     cameraThread.setShowContours(false);
     cameraThread.start();
@@ -81,8 +85,22 @@ public final class Main {
       } catch (InterruptedException ex) {
         return;
       }
+      // Run Vision Method
       double offset = vision.getContourDistanceBox();
+      // Update each vision entry
       
+      /**
+       * contourSize: the number of closed contours found
+       * 
+       * centerX: X Value of coordinate that is the center of the
+       * two contours in the image coordinate system
+       * 
+       * inside dist: the distance between the centers
+       * of the contours
+       * 
+       * contoursPresent: determines if both contours
+       * are visible by the camera
+       */
       contourSize.setDouble(vision.contourSize());
       centerX.setDouble(vision.centerX()); 
       inside_dist.setDouble(offset);
