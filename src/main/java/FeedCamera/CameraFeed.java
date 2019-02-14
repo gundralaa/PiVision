@@ -188,7 +188,7 @@ public class CameraFeed extends Thread
 
 		Gson gson = new GsonBuilder().create();
 
-		camera.setConfigJson(gson.toJson(config.config));
+		//camera.setConfigJson(gson.toJson(config.config));
 
 		return camera;
 	}
