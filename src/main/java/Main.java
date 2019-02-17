@@ -36,6 +36,7 @@ public final class Main {
     NetworkTableEntry contoursPresent = table.getEntry("contours_present");
     NetworkTableEntry contourSize = table.getEntry("contour_size");
     NetworkTableEntry centerX = table.getEntry("contour_center_x");
+    NetworkTableEntry targetsPresent = table.getEntry("targets_present");
 
     System.out.println("Setting up NetworkTables client for team " + team);
     ntinst.startClientTeam(team);
@@ -64,8 +65,9 @@ public final class Main {
       } catch (InterruptedException ex) {
         return;
       }
+
+      vision.findVisionTargets();
       // Run Vision Method
-      double offset = vision.getContourDistanceBox();
       // Update each vision entry
       
       /**
@@ -83,8 +85,9 @@ public final class Main {
 
       contourSize.setDouble(vision.contourSize());
       centerX.setDouble(vision.centerX()); 
-      inside_dist.setDouble(offset);
-      contoursPresent.setBoolean(vision.contoursPresent()); 
+      inside_dist.setDouble(vision.distBetweenContours());
+      contoursPresent.setBoolean(vision.contoursPresent());
+      targetsPresent.setString(vision.targetsPresent()); 
     }
   }
 }

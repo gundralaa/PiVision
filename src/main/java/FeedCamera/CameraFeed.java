@@ -3,6 +3,9 @@ package FeedCamera;
 import java.util.ArrayList;
 
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import FeedCamera.Grip.GripVisionPipeline;
 import FeedCamera.VisionPipelineModifier;
@@ -85,6 +88,8 @@ public class CameraFeed extends Thread
 	public static int team;
 	public static boolean server;
 	public static List<CameraConfig> cameraConfigs = new ArrayList<>();
+
+	public static ArrayList<Rect> rects = new ArrayList<>();
 	
 
 	/**
@@ -92,6 +97,10 @@ public class CameraFeed extends Thread
 	 */
 	public static void parseError(String str) {
 		System.err.println("config error in '" + configFile + "': " + str);
+	}
+
+	public static void addRect(Rect rect){
+		rects.add(rect);
 	}
 
 	/**
@@ -511,6 +520,8 @@ public class CameraFeed extends Thread
 			    synchronized (this) 
 			    {
 					result = imageSource.grabFrame(image);
+					drawRects();
+
 					if(showContours){
 						modPipe.process(image);
 						//Util.consoleLog("Output: %d", modPipe.filterContoursOutput().size());
@@ -523,6 +534,7 @@ public class CameraFeed extends Thread
 					}
 					else {
 						imageOutputStream.putFrame(image);
+						rects = new ArrayList<Rect>();
 					}
 				} 
 			}
@@ -530,7 +542,15 @@ public class CameraFeed extends Thread
 		catch (Throwable e)	{
 			//Util.logException(e);
 		}
-    }
+	}
+	
+	private void drawRects(){
+		for(Rect rect: rects){
+			Imgproc.rectangle(image, rect.br(), rect.tl(), new Scalar(0, 255, 0));
+		}
+	}
+
+
 	
 
 	

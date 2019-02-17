@@ -11,14 +11,18 @@ import Pipelines.GripPipelineReflectiveTape;
 public class Vision 
 {
 	private CameraFeed cameraThread;
-	public Rect   targetRectangleRight, targetRectangeLeft;
+	public Rect   targetRectangleRight = null, targetRectangeLeft = null;
 	private GripPipelineReflectiveTape pipeline = new GripPipelineReflectiveTape();
 	private double centerX, centerY;
 	
-	private final double LEFT_ANGLE_THRESHOLD = 0.0;
-	private final double RIGHT_ANGLE_THRESHOLD = 0.0;
+	private final double LEFT_ANGLE_THRESHOLD = -70;
+	private final double RIGHT_ANGLE_THRESHOLD = -10;
 	private boolean contoursPresent;
 	private int contourSize;
+
+	private double offset = 0.0;
+	private double centerXLeft = 0.0, centerXRight = 0.0;
+	private Mat image = null;
 	
 	// This variable and method make sure this class is a singleton.
 	
@@ -55,17 +59,55 @@ public class Vision
 		return centerX;
 	}
 
-	public double getContourDistanceBox(){
-		
-		double offset = 0.0;
-		double centerXLeft = 0.0, centerXRight = 0.0;
-		Mat image = null;
-		targetRectangeLeft = null;
-		targetRectangleRight = null;
+	public double distBetweenContours(){
+		return offset;
+	}
 
-	    image = cameraThread.getCurrentImage();
+	public Rect getRightRect(){
+		return targetRectangleRight;
+	}
 
+	public Rect getLeftRect(){
+		return targetRectangeLeft;
+	}
+
+	public String targetsPresent(){
+		if(contoursPresent){
+			return "Both";
+		}
+		else if(targetRectangeLeft != null){
+			return "Left";
+		}
+		else if(targetRectangleRight != null){
+			return "Right";
+		}
+		else{
+			return "None";
+		}
+	}
+
+	public void findContours(){
+		image = cameraThread.getCurrentImage();
 		pipeline.process(image);
+	}
+
+	public void findVisionTargets(){
+		findContours();
+		getContourTargetAngled();
+		if(targetRectangeLeft != null){
+			cameraThread.addRect(targetRectangeLeft);
+		}
+		if(targetRectangleRight != null){
+			cameraThread.addRect(targetRectangleRight);
+		}
+		contourDistanceBox();
+	}
+
+	public void findCargo(){
+
+	}
+
+	public void getContourTarget(){
 		contourSize = pipeline.filterContoursOutput().size();
 		
 		if(contourSize > 1){
@@ -80,7 +122,12 @@ public class Vision
 
 		}
 
+	}
+
+	public void contourDistanceBox(){
+
 		contoursPresent = (targetRectangeLeft != null && targetRectangleRight != null);
+
 		if(contoursPresent){
 			centerXLeft = targetRectangeLeft.x + targetRectangeLeft.width / 2;
 			centerXRight = targetRectangleRight.x + targetRectangleRight.width / 2;
@@ -100,46 +147,34 @@ public class Vision
 			System.out.println("No Targets");
 		}
 
-		return offset;
 	}
 
 	public void getContourTargetAngled(){
 		
 		Mat image = null;
-		RotatedRect rect2 = null, rect1 = null;
-		image = cameraThread.getCurrentImage();
-
-		pipeline.process(image);
+		RotatedRect rect1 = null;
 
 		int size = pipeline.filterContoursOutput().size();
-		
-		if( size > 0){
+
+		if( size > 1){
+			getContourTarget();
+		}
+		else if( size > 0){
 			MatOfPoint2f rect1Points = new MatOfPoint2f(pipeline.filterContoursOutput().get(0).toArray());
 			rect1 = Imgproc.minAreaRect(rect1Points);
+			System.out.println(rect1.angle);
 						
-			if(rect1.angle > LEFT_ANGLE_THRESHOLD){
-				targetRectangeLeft = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
-				return;
-			}
-
-			
-		}
-
-		if(size > 1){
-			MatOfPoint2f rect2Points = new MatOfPoint2f(pipeline.filterContoursOutput().get(1).toArray());
-			rect2 = Imgproc.minAreaRect(rect2Points);
-
-			if(rect2.angle > LEFT_ANGLE_THRESHOLD){
-				targetRectangeLeft = Imgproc.boundingRect(pipeline.filterContoursOutput().get(1));
+			if(rect1.angle < RIGHT_ANGLE_THRESHOLD && rect1.angle > LEFT_ANGLE_THRESHOLD){
 				targetRectangleRight = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
+				targetRectangeLeft = null;
+				return;
+			}
+			else if(rect1.angle < LEFT_ANGLE_THRESHOLD) {
+				targetRectangeLeft = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
+				targetRectangleRight = null;
 				return;
 			}
 
-			if(rect2.angle < RIGHT_ANGLE_THRESHOLD){
-				targetRectangeLeft = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
-				targetRectangleRight = Imgproc.boundingRect(pipeline.filterContoursOutput().get(1));
-				return;
-			}
 			
 		}
 
