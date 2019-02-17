@@ -49,11 +49,13 @@ public class CameraFeed extends Thread
 	private int					currentCameraIndex;
 	private ArrayList			<VideoSource>cameras = new ArrayList<VideoSource>();
 	private Mat 				image = new Mat();
+	private Mat                 image2 = new Mat();
+
 	private static CameraFeed	cameraFeed;
 	private boolean				initialized;
-	private MjpegServer			mjpegServer;
-	private CvSink				imageSource;
-	private CvSource			imageOutputStream;
+	private MjpegServer			mjpegServer, mjpegServerDriver;
+	private CvSink				imageSource, imageSourceDriver;
+	private CvSource			imageOutputStream, imageOutputDriver;
 	private boolean				changingCamera;
 	private boolean             showContours = true;
 	
@@ -253,18 +255,22 @@ public class CameraFeed extends Thread
             // Create Mjpeg stream server.
             
 			mjpegServer = CameraServer.getInstance().addServer("4450-RaspiServer", 1181);
+			//mjpegServerDriver = CameraServer.getInstance().addServer("4450-RaspiDriver", 1182);
 
             // Create image source.
             
-            imageSource = new CvSink("4450-Raspi-CvSink");
+			imageSource = new CvSink("4450-Raspi-CvSink");
+			//imageSourceDriver = new CvSink("4450-RaspiDriver-CvSink");
             
             // Create output image stream.
             
-            imageOutputStream = new CvSource("4450-Raspi-CvSource", VideoMode.PixelFormat.kMJPEG, imageWidth, imageHeight, (int) frameRate);
+			imageOutputStream = new CvSource("4450-Raspi-CvSource", VideoMode.PixelFormat.kMJPEG, imageWidth, imageHeight, (int) frameRate);
+			//imageOutputDriver = new CvSource("4450-RaspiDriver-CvSource", VideoMode.PixelFormat.kMJPEG, imageWidth, imageHeight, (int) frameRate);
 			//imageOutputStream = new CvSource("4450-CvSource");
 
 			
-			mjpegServer.setSource(imageOutputStream);            
+			mjpegServer.setSource(imageOutputStream);
+			//mjpegServerDriver.setSource(imageOutputDriver);            
             // Create cameras by getting the list of cameras detected by the RoboRio and
             // creating camera objects and storing them in an arraylist so we can switch
 			// between them.
@@ -283,7 +289,8 @@ public class CameraFeed extends Thread
             
             // Set starting camera.
 
-            ChangeCamera();
+			ChangeCamera(false);
+			//ChangeCamera(true);
 		}
 		catch (Throwable e) {//Util.logException(e);
 		}
@@ -439,7 +446,7 @@ public class CameraFeed extends Thread
 	 * Change the camera to get images from the next camera in the list of cameras.
 	 * At end of list loops around to the first. 
 	 */
-	public void ChangeCamera()
+	public void ChangeCamera(boolean driver)
     {
 		//Util.consoleLog();
 		
@@ -464,7 +471,7 @@ public class CameraFeed extends Thread
 		
 	    synchronized (this) 
 	    {
-	    	imageSource.setSource(currentCamera);
+			imageSource.setSource(currentCamera);
 	    }
 	    
 	    changingCamera = false;
@@ -503,6 +510,7 @@ public class CameraFeed extends Thread
 	private void UpdateCameraImage()
     {
 		long	result;
+		long    driverResult;
 		
 		try
 		{
@@ -511,6 +519,7 @@ public class CameraFeed extends Thread
 			    synchronized (this) 
 			    {
 					result = imageSource.grabFrame(image);
+					//driverResult = imageSourceDriver.grabFrame(image2);
 					if(showContours){
 						modPipe.process(image);
 						//Util.consoleLog("Output: %d", modPipe.filterContoursOutput().size());
@@ -525,6 +534,10 @@ public class CameraFeed extends Thread
 						imageOutputStream.putFrame(image);
 					}
 				} 
+
+				/* if(driverResult != 0){
+					imageOutputDriver.putFrame(image2);
+				} */
 			}
 		}
 		catch (Throwable e)	{
