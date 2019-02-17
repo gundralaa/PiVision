@@ -27,7 +27,7 @@ public final class Main {
       System.out.println("Config File");
     }
     
-    // start NetworkTables
+    // Start NetworkTables
     NetworkTableInstance ntinst = NetworkTableInstance.getDefault();
     NetworkTable table = ntinst.getTable(tableName);
     
@@ -80,6 +80,7 @@ public final class Main {
        * contoursPresent: determines if both contours
        * are visible by the camera
        */
+
       contourSize.setDouble(vision.contourSize());
       centerX.setDouble(vision.centerX()); 
       inside_dist.setDouble(offset);
