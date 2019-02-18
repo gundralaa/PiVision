@@ -103,6 +103,11 @@ public class CameraFeed extends Thread
 		rects.add(rect);
 	}
 
+	public int getCameraType(){
+		return currentCameraIndex;
+	}
+
+
 	/**
 	 * Read single camera configuration.
 	 */
@@ -506,6 +511,7 @@ public class CameraFeed extends Thread
 	    
 	    //Util.consoleLog("end");
 	}
+
 	
 	// Get an image from current camera and give it to the server.
     

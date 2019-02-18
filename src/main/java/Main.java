@@ -1,7 +1,11 @@
 
+import java.util.function.Consumer;
+
 import FeedCamera.CameraFeed;
 import FeedCamera.Vision;
 import Pipelines.GripPipelineReflectiveTape;
+import edu.wpi.first.networktables.EntryListenerFlags;
+import edu.wpi.first.networktables.EntryNotification;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -37,6 +41,10 @@ public final class Main {
     NetworkTableEntry contourSize = table.getEntry("contour_size");
     NetworkTableEntry centerX = table.getEntry("contour_center_x");
     NetworkTableEntry targetsPresent = table.getEntry("targets_present");
+
+    // Camera Switch
+    NetworkTableEntry cameraVision = table.getEntry("camera_vision");
+
 
     System.out.println("Setting up NetworkTables client for team " + team);
     ntinst.startClientTeam(team);
@@ -88,6 +96,9 @@ public final class Main {
       inside_dist.setDouble(vision.distBetweenContours());
       contoursPresent.setBoolean(vision.contoursPresent());
       targetsPresent.setString(vision.targetsPresent()); 
+
+      cameraVision.setDouble(cameraThread.getCameraType());
+
     }
   }
 }

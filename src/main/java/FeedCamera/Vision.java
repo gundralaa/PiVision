@@ -1,15 +1,30 @@
 package FeedCamera;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.MatOfPoint3f;
+import org.opencv.core.Point;
+import org.opencv.core.Point3;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.imgproc.Imgproc;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.opencv.calib3d.*;
 
 import Pipelines.GripPipelineReflectiveTape;
 
 public class Vision 
 {
+	/**
+	 * 
+	 * 
+	 */
+
 	private CameraFeed cameraThread;
 	public Rect   targetRectangleRight = null, targetRectangeLeft = null;
 	private GripPipelineReflectiveTape pipeline = new GripPipelineReflectiveTape();
@@ -24,6 +39,22 @@ public class Vision
 	private double centerXLeft = 0.0, centerXRight = 0.0;
 	private Mat image = null;
 	
+
+	// Values in CM Coordinates of Both Targets
+	private static final MatOfPoint3f worldCoordinatesTarget = new MatOfPoint3f();
+
+	private Mat rvec = new Mat();
+	private Mat tvec = new Mat();
+	private Mat rMat = new Mat();
+
+	private double directAngle; // Angle Between Ray between Robot and Target
+	private double perpAngle; // Angle Between Target and Perpendicular
+
+	private Mat cameraMatrix = new Mat(3, 3, CvType.CV_32FC1);
+
+
+	private MatOfPoint2f imageCoordinatesTarget = new MatOfPoint2f();
+	
 	// This variable and method make sure this class is a singleton.
 	
 	public static Vision vision = null;
@@ -35,6 +66,18 @@ public class Vision
 			vision.contourSize = 0;
 			vision.contoursPresent = false;
 			vision.centerX = 0.0;
+
+			worldCoordinatesTarget.alloc(4);
+			
+			new Point3(0,0,0); // Center
+			new Point3(10,0,0); //Right Target Center
+			new Point3(-10, 0, 0); // Left Target Center
+			
+			worldCoordinatesTarget.put(0, 0, 0, 0, 0); //Center
+			worldCoordinatesTarget.put(1, 0, 0, 0, 10); //Right
+			worldCoordinatesTarget.put(2, 0, 0, 0, -10); //Left
+			worldCoordinatesTarget.put(3, 0, 0, 5, -10);
+
 		}
 		
 		return vision;
@@ -101,11 +144,54 @@ public class Vision
 			cameraThread.addRect(targetRectangleRight);
 		}
 		contourDistanceBox();
+		if(contoursPresent){
+			calculateAngles();
+		}
 	}
 
 	public void findCargo(){
 
 	}
+
+	public void calculateAngles(){
+		int leftYCenter = (targetRectangeLeft.y + targetRectangeLeft.height) / 2;
+		int rightYCenter = (targetRectangleRight.y + targetRectangleRight.height) / 2;
+		
+		Point left = new Point(centerXLeft, leftYCenter);
+		Point right = new Point(centerXRight, rightYCenter);
+		Point center = new Point(centerX, (leftYCenter + rightYCenter)/2);
+
+		imageCoordinatesTarget.alloc(4);
+
+		imageCoordinatesTarget.put(0, 0, center.x, center.y);
+		imageCoordinatesTarget.put(1, 0, right.x, right.y);
+		imageCoordinatesTarget.put(2, 0, left.x, left.y);
+		imageCoordinatesTarget.put(3, 0, targetRectangeLeft.x, targetRectangeLeft.y);
+
+		// Get Camera Matrix (TODO Camera Calibration)
+		cameraMatrix.put(0, 0, 1);
+		cameraMatrix.put(1, 1, 1);
+
+		Mat intrinsics = Mat.eye(3, 3, CvType.CV_64F);
+        intrinsics.put(0, 0, 1);
+		intrinsics.put(1, 1, 1);
+		
+		MatOfDouble distCoff = new MatOfDouble();
+
+
+		// Get rotation and translation matrix
+		Calib3d.solvePnP(worldCoordinatesTarget, imageCoordinatesTarget , intrinsics , distCoff, rvec, tvec);
+		Calib3d.Rodrigues(rvec, rMat);
+
+		double x = tvec.get(0, 0)[0];
+		double z = tvec.get(2, 0)[0];
+
+		directAngle = Math.atan2(x, z);
+		System.out.println("Angle" + directAngle);
+
+
+	}
+
 
 	public void getContourTarget(){
 		contourSize = pipeline.filterContoursOutput().size();
@@ -179,6 +265,8 @@ public class Vision
 		}
 
 	}
+
+
 
 
 }
