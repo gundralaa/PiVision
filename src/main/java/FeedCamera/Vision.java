@@ -38,6 +38,9 @@ public class Vision
 	private double offset = 0.0;
 	private double centerXLeft = 0.0, centerXRight = 0.0;
 	private Mat image = null;
+
+	private static double imageWidth;
+	private static double imageHeight;
 	
 
 	// Values in CM Coordinates of Both Targets
@@ -54,6 +57,8 @@ public class Vision
 
 
 	private MatOfPoint2f imageCoordinatesTarget = new MatOfPoint2f();
+
+	private double angleOffset = 0.0;
 	
 	// This variable and method make sure this class is a singleton.
 	
@@ -77,6 +82,8 @@ public class Vision
 			worldCoordinatesTarget.put(1, 0, 0, 0, 10); //Right
 			worldCoordinatesTarget.put(2, 0, 0, 0, -10); //Left
 			worldCoordinatesTarget.put(3, 0, 0, 5, -10);
+
+			imageWidth = cameraThread.getImageWidth();
 
 		}
 		
@@ -114,6 +121,10 @@ public class Vision
 		return targetRectangeLeft;
 	}
 
+	public double getAngleOffset(){
+		return angleOffset;
+	}
+
 	public String targetsPresent(){
 		if(contoursPresent){
 			return "Both";
@@ -127,6 +138,14 @@ public class Vision
 		else{
 			return "None";
 		}
+	}
+
+	public double getDirectAngle(){
+		return directAngle;
+	}
+
+	public double getPerpAngle(){
+		return perpAngle;
 	}
 
 	public void findContours(){
@@ -145,7 +164,7 @@ public class Vision
 		}
 		contourDistanceBox();
 		if(contoursPresent){
-			calculateAngles();
+			calculateAnglesSimple();
 		}
 	}
 
@@ -153,7 +172,14 @@ public class Vision
 
 	}
 
-	public void calculateAngles(){
+	public void calculateAnglesSimple(){
+		double imageCenter = (imageWidth/2);
+		angleOffset = -(centerX - imageCenter);
+		directAngle = -((centerX - imageCenter) / (imageCenter));
+		System.out.println(directAngle);
+	}
+
+	public void calculateAnglesPNP(){
 		int leftYCenter = (targetRectangeLeft.y + targetRectangeLeft.height) / 2;
 		int rightYCenter = (targetRectangleRight.y + targetRectangleRight.height) / 2;
 		

@@ -107,6 +107,10 @@ public class CameraFeed extends Thread
 		return currentCameraIndex;
 	}
 
+	public double getImageWidth(){
+		return imageWidth;
+	}
+
 
 	/**
 	 * Read single camera configuration.
@@ -469,9 +473,46 @@ public class CameraFeed extends Thread
 		{
 			currentCameraIndex++;
 			
-			if (currentCameraIndex == cameras.size()) currentCameraIndex = 0;
+			if (currentCameraIndex >= cameras.size()) currentCameraIndex = 0;
 			
 			currentCamera = cameras.get(currentCameraIndex);
+		}
+		
+		//Util.consoleLog("current=(%d) %s", currentCameraIndex, currentCamera.getName());
+		
+	    synchronized (this) 
+	    {
+	    	imageSource.setSource(currentCamera);
+	    }
+	    
+	    changingCamera = false;
+	    
+	    //Util.consoleLog("end");
+	}
+	
+	/**
+	 * Change the camera to get images from the next camera in the list of cameras.
+	 * At end of list loops around to the first. 
+	 */
+	public void ChangeCamera(int index)
+    {
+		//Util.consoleLog();
+		
+		if (!initialized) return;
+		
+		if (cameras.isEmpty()) return;
+		
+		changingCamera = true;
+		
+		if (currentCamera == null)
+			currentCamera = cameras.get(index);
+		else
+		{
+			
+			if (index >= cameras.size()) index = 0;
+			
+			currentCamera = cameras.get(index);
+			currentCameraIndex = index;
 		}
 		
 		//Util.consoleLog("current=(%d) %s", currentCameraIndex, currentCamera.getName());

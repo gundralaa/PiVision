@@ -42,6 +42,11 @@ public final class Main {
     NetworkTableEntry centerX = table.getEntry("contour_center_x");
     NetworkTableEntry targetsPresent = table.getEntry("targets_present");
 
+    NetworkTableEntry directAngle = table.getEntry("turn_angle");
+    NetworkTableEntry perpAngle = table.getEntry("turn_angle_complex");
+
+    NetworkTableEntry angleOffset = table.getEntry("angle_offset");
+
     // Camera Switch
     NetworkTableEntry cameraVision = table.getEntry("camera_vision");
 
@@ -93,11 +98,22 @@ public final class Main {
 
       contourSize.setDouble(vision.contourSize());
       centerX.setDouble(vision.centerX()); 
+      
       inside_dist.setDouble(vision.distBetweenContours());
       contoursPresent.setBoolean(vision.contoursPresent());
       targetsPresent.setString(vision.targetsPresent()); 
 
+      directAngle.setDouble(vision.getDirectAngle());
+      perpAngle.setDouble(vision.getPerpAngle());
+      angleOffset.setDouble(vision.getAngleOffset());
+
+      if((int)cameraVision.getDouble(0.0) != cameraThread.getCameraType()){
+        System.out.println("Changing Camera");
+        cameraThread.ChangeCamera((int)cameraVision.getDouble(0.0));
+      }
+      
       cameraVision.setDouble(cameraThread.getCameraType());
+      
 
     }
   }
